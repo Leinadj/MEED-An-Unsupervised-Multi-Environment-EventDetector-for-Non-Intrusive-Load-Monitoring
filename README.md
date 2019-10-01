@@ -12,6 +12,6 @@ The MEED event dector class contains the autoencoder model definition in its fit
 
 
 
-### For questions plase contact: daniel.jorde@tum.de
+### For questions please contact: daniel.jorde@tum.de
 
 
