@@ -1,4 +1,5 @@
-# Repository for the paper "MEED: An Unsupervised Multi-Environment EventDetector for Non-Intrusive Load Monitoring" by Daniel Jorde and Hans-Arno Jacobsen
+# Repository for the paper "MEED: An Unsupervised Multi-Environment EventDetector for Non-Intrusive Load Monitoring"
+### by Daniel Jorde and Hans-Arno Jacobsen
 
 ## Content
 The repository contains the implementations of the four algorithms used for the benchmark of the MEED event detector and the MEED event detector itself.
