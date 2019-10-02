@@ -212,7 +212,6 @@ class BLUED_Dataset(BaseDataset):
 
 
 
-
                 #TODO hier passiert der Fehler, reference time ist nicht überall gleich
                 data_txt = data_txt.split("***End_of_Header***")
                 reference_time = data_txt[0].split("Date,")[1][:11].replace("\n","") +"-"+ data_txt[0].split("Time,")[1][:15]

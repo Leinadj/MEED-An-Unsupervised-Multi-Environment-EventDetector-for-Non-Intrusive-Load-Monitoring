@@ -30,7 +30,7 @@ from keras.layers import Convolution1D, Dense, MaxPooling1D, Flatten, UpSampling
 from keras.models import load_model
 from keras import optimizers
 from keras import backend as kback
-
+import os
 
 class EventDet_MEED(BaseEstimator, ClassifierMixin):
     """
@@ -202,7 +202,7 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
             raise ValueError("The signal length has to match the length of the signal the model expects")
         return self
 
-    def predict(self, current_cumsum_p, current_rms_p, start_datetime_p, use_median_p=False, return_MSE_p=False):
+    def predict(self, current_cumsum_p, current_rms_p, start_datetime_p, use_median_p=False, return_MSE_p=False, cpu_only_p=True):
         """
         Predicts the event timestamp for a given input signal.
         Internally it calls the _coarse_detection_step method and if an event is detected here, it
@@ -230,6 +230,9 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
             then the change_points_timestamps_list, as also the mse values of the TN
             are returned
 
+        cpu_only_p: boolean
+            Use only cpus for predicting
+
         Returns
         -------
             timestamps: list
@@ -238,6 +241,11 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
             mse: float, optional
                 If return_MSE_p is set to true, also the mse_list is returned
         """
+
+        if cpu_only_p is True:
+            os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"  # see issue #152
+            os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
         check_is_fitted(self, ["is_fitted"])  # check if fit() was called before
 
         # if the window is empty return empty list
@@ -302,9 +310,9 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
         if len(current_p) == 0:
             raise ValueError("The current signal you have provided, is empty! Please check your input!")
 
-        Electrical_Metrics = Electrical_Metrics()
+        metrics = Electrical_Metrics()
 
-        current_rms = Electrical_Metrics.compute_single_rms(current_p, period_length=int(
+        current_rms = metrics.compute_single_rms(current_p, period_length=int(
             period_length_p * self.rms_periods))  # Preprocessing Function for the Stream
         # CUMSUM
         differences_np = current_rms - np.mean(current_rms)
@@ -313,7 +321,7 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
         if len(current_cumsum) != self.signal_length or len(current_rms) != self.signal_length:
             raise ValueError(
                 "The signal length specified is not in line with the period_length and the size of the current signal "
-                "that is provided! Please check your window size, sampling rate and other relevant"
+                "that is provided! Please check your window size, sampling rate and other relevant "
                 "parameters!")
 
         return current_cumsum, current_rms
@@ -456,8 +464,7 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
 
         return results
 
-    def _train_LSTM_autoencoder(self, training_file_paths_p, training_index_p, save_path_p, merge_mode_p="concat",
-                                epochs_p=200, batch_size_p=128, optimizer_p=optimizers.Adam()):
+    def _train_LSTM_autoencoder(self, merge_mode_p="concat", optimizer_p=optimizers.Adam()):
         """
         Function to train the autoencoder model, stores the model under the model_save_path parameter
         Returns:
@@ -465,8 +472,6 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
         optimizers.SGD(0.0001, momentum=0.9, nesterov=True)
 
         """
-        # TODO implement training Function
-        scaler = preprocessing.StandardScaler()
 
         model = Sequential()
 
@@ -484,23 +489,7 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
         # Compile the model
         model.compile(loss='mean_squared_error', optimizer=optimizer_p, metrics=["mse"])  #
 
-        # history = model.fit_generator(x_train, y_train, epochs=int(epochs), batch_size=int(batch_size),verbose=1,callbacks=[tensorboard])  # verbose = 1 --> progress bar
-
-        # model.save(os.path.join(model_path, model_name)) #at the end of each day save the model: overwrites the old ones per default
-
-        """        # For scaling, need to create and fit a scaler for every channel (i.e. medal socket)
-        scalers = {}
-        for i in range(training_windows.shape[2]):
-            scalers[i] = preprocessing.StandardScaler()
-            try:
-                training_windows[:, :, i] = scalers[i].fit_transform(training_windows[:, :,
-                                                                     i])  # get all the file signals for a certain channel (len(training_windows),MODEL_INPUT_SIZE)
-            except:
-                print("ERROR WHEN SCALING THE INPUT")
-                continue
-
-
-       """
+        return model
 
     def _coarse_detection_step(self, current_cumsum_p, return_MSE_p):
         """
@@ -985,8 +974,8 @@ class EventDet_Jin(BaseEstimator, ClassifierMixin):
 
         """
         #compute the active power
-        Electrical_Metrics = Electrical_Metrics()
-        active_power = Electrical_Metrics.active_power(voltage,current,period_length)
+        metrics = Electrical_Metrics()
+        active_power = metrics.active_power(voltage,current,period_length)
         return active_power
 
 
@@ -1289,13 +1278,9 @@ class EventDet_Zheng(BaseEstimator, ClassifierMixin):
         active_power = input_data[:, 0]
         current_rms = input_data[:, 1]
 
-        #Do the clustering
-        if self.dbscan_multiprocessing == True:
-            n_jobs = -1
-        else:
-            n_jobs = 0
 
-        dbscan = DBSCAN(eps=self.eps,min_samples=self.min_pts, n_jobs=n_jobs).fit(input_data)
+
+        dbscan = DBSCAN(eps=self.eps,min_samples=self.min_pts).fit(input_data)
 
 
         dbscan_labels = np.array(dbscan.labels_)
@@ -3173,7 +3158,6 @@ class EventDet_Liu_Ripple(BaseEstimator, ClassifierMixin):
             results["fn_events"] = FN_events
 
         return results
-
 
 class Electrical_Metrics:
     def __init__(self):
