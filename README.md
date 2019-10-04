@@ -6,11 +6,11 @@ The repository contains the implementations of the four algorithms used for the 
 
 
 The algorithms are implemented following the sklearn API.
-The hyperparameter settings use to produce the results in the paper are based on a grid search and are included as default values for the respective parameters in the algorithm implementations.
+The hyperparameter settings used to produce the results in the paper are based on a grid search and are included as default values for the respective parameters in the algorithm implementations.
 
 The MEED event dector class contains the autoencoder model definition in its fit() function, but the training has do be done externally as it is to computationally intensive and dependent on the dataset to be done within the fit() function.
 
-Trained models can be found in the *MEED_Models* folder. They are zip compressed and stored as keras .h5 models.
+Trained models can be found in the *MEED_Models* folder. They are zip compressed and stored as keras ".h5" models.
 
 As the models are trained via cross-validation each subfolder contains multiple instances of each model, each having a unique id that corresponds to the fold of the cross-validation that was used to train them.
 
