@@ -3417,6 +3417,7 @@ class Electrical_Metrics:
     def __init__(self):
         pass
 
+    @staticmethod
     def active_power(self,instant_voltage, instant_current,period_length):
         """
         Active or Real power is the average of instantaneous power.
@@ -3462,7 +3463,7 @@ class Electrical_Metrics:
         else:
             raise ValueError("Signals need to have the same length")
 
-
+    @staticmethod
     def apparent_power(self, instant_voltage,instant_current,period_length):
         """
         Compute apparent power:
@@ -3493,7 +3494,7 @@ class Electrical_Metrics:
         else:
             raise ValueError("Signals need to have the same length")
 
-
+    @staticmethod
     def reactive_power(self,apparent_power,active_power):
         """
         Compute reactive power:
@@ -3519,6 +3520,7 @@ class Electrical_Metrics:
         else:
             raise ValueError("Signals need to have the same length")
 
+    @staticmethod
     def compute_power_factor(self,apparent_power,active_power):
         """
         Compute power factor:
@@ -3541,6 +3543,7 @@ class Electrical_Metrics:
         power_factor = active_power / apparent_power
         return power_factor
 
+    @staticmethod
     def compute_voltage_current_rms(self, voltage, current, period_length):
         """
         Compute Root-Mean-Square (RMS) values for the provided voltage and current.
@@ -3567,6 +3570,7 @@ class Electrical_Metrics:
         current_rms = self.compute_single_rms(current, period_length)
         return voltage_rms, current_rms
 
+    @staticmethod
     def compute_single_rms(self,signal,period_length):
         """
         Compute Root-Mean-Square (RMS) values for the provided signal.
