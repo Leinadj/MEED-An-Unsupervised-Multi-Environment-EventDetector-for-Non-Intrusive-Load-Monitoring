@@ -4,6 +4,7 @@
 ## Content
 The repository contains the implementations of the four algorithms used for the benchmark of the MEED event detector and the MEED event detector itself.
 
+All code is released under the MIT licence.
 
 The algorithms are implemented following the sklearn API.
 The hyperparameter settings used to produce the results in the paper are based on a grid search and are included as default values for the respective parameters in the algorithm implementations.
