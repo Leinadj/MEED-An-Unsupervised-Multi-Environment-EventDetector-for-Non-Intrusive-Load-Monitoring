@@ -34,58 +34,57 @@ import os
 
 class EventDet_MEED(BaseEstimator, ClassifierMixin):
     """
-    Event Detector according the paper of Daniel Jorde
+    MEED Event Detector according the paper of Daniel Jorde
 
-    Parameters
+    Attributes
     ----------
+    model_location_p : str
+        Either this is a path to an existing model in the Keras model format,
+        or in the case a new model will be trained, it will be stored using the model_location path.
+        This path should already include the name of the model.
 
-        model_location_p: str
-            Either this is a path to an existing model in the Keras model format,
-            or in the case a new model will be trained, it will be stored using the model_location path.
-            This path should already include the name of the model.
+    coarse_mse_threshold_p : int
+        The threshold that is applied to the MSE reconstruction error of the autoencoder.
+        Determine whether a coarse event (i.e. event window) is detected or not.
 
-        coarse_mse_threshold_p: int
-            The threshold that is applied to the MSE reconstruction error of the autoencoder.
-            Determine whether a coarse event (i.e. event window) is detected or not.
+    signal_length_p : int, optional (default = 100)
+        Length of the input signal.
+        This is also the length the model is expecting at its input nodes and the length of the output of the model.
 
-        signal_length_p: int, optional (default = 100)
-            Length of the input signal.
-            This is also the length the model is expecting at its input nodes and the length of the output of the model.
+    min_time_between_events_threshold_p : int, optional (default = 3)
+        The minimum number of samples that is maintained between two consecutive event candidates.
+        It is used in the fine grained event detection step.
+        Use this parameter to incorporate a handmade event definition into the algorithm.
 
-        min_time_between_events_threshold_p: int, optional (default = 3)
-            The minimum number of samples that is maintained between two consecutive event candidates.
-            It is used in the fine grained event detection step.
-            Use this parameter to incorporate a handmade event definition into the algorithm.
+    fluctuation_limit_diff_threshold_p : int, optional (default = 1)
+        Is used to suppress minor fluctations in the signal.
 
-        fluctuation_limit_diff_threshold_p: int, optional (default = 1)
-            Is used to suppress minor fluctations in the signal.
+    rms_periods_p : int, optional (default = 5)
+        The number of periods the Root-Mean-Square (RMS) of the current signal is computed over.
 
-        rms_periods_p: int, optional (default = 5)
-            The number of periods the Root-Mean-Square (RMS) of the current signal is computed over.
+    network_frequency_p: int, optional (default = 50)
+        The base frequency of the power network, where the data is recorded in.
+        It is measured in Hz.
+        For example: Europe = 50 (Hz) or US = 60 (Hz)
 
-        network_frequency_p: int, optional (default = 50)
-            The base frequency of the power network, where the data is recorded in.
-            It is measured in Hz.
-            For example: Europe = 50 (Hz) or US = 60 (Hz)
-
-        window_size_sec_p: int, optional (default = 10)
-            Size of the input window
+    window_size_sec_p : int, optional (default = 10)
+        Size of the input window
 
     Functions
     ---------
-        fit
+    fit
 
-        predict
+    predict
 
-        score: static
+    score: static
 
-        _train_LSTM_autoencoder
+    _train_LSTM_autoencoder
 
-        _coarse_detection_step
+    _coarse_detection_step
 
-        _fine_grained_detection_step
+    _fine_grained_detection_step
 
-        _compute_timestamp_from_index
+    _compute_timestamp_from_index
 
 
     """
@@ -96,40 +95,42 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
         """
         Parameters
         ----------
-
-        model_location_p: str
+        model_location_p : str
             Either this is a path to an existing model in the Keras model format,
             or in the case a new model will be trained, it will be stored using the model_location path.
             This path should already include the name of the model.
 
-        coarse_mse_threshold_p: int
+        coarse_mse_threshold_p : int
             The threshold that is applied to the MSE reconstruction error of the autoencoder.
             Determine whether a coarse event (i.e. event window) is detected or not.
 
-        signal_length_p: int, optional (default = 100)
+        signal_length_p : int, optional (default = 100)
             Length of the input signal.
             This is also the length the model is expecting at its input nodes and the length of the output of the model.
 
-        min_time_between_events_threshold_p: int, optional (default = 3)
+        min_time_between_events_threshold_p : int, optional (default = 3)
             The minimum number of samples that is maintained between two consecutive event candidates.
             It is used in the fine grained event detection step.
             Use this parameter to incorporate a handmade event definition into the algorithm.
 
-        fluctuation_limit_diff_threshold_p: int, optional (default = 1)
+        fluctuation_limit_diff_threshold_p : int, optional (default = 1)
             Is used to suppress minor fluctations in the signal.
 
-        rms_periods_p: int, optional (default = 5)
+        rms_periods_p : int, optional (default = 5)
             The number of periods the Root-Mean-Square (RMS) of the current signal is computed over.
 
-        network_frequency_p: int, optional (default = 50)
+        network_frequency_p : int, optional (default = 50)
             The base frequency of the power network, where the data is recorded in.
             It is measured in Hz.
             For example: Europe = 50 (Hz) or US = 60 (Hz)
 
-        window_size_sec_p: int, optional (default = 10)
+        window_size_sec_p : int, optional (default = 10)
             Size of the input window
+
         Returns
         -------
+
+        None
 
         """
         self.model_location = model_location_p
@@ -147,11 +148,10 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
+        train_new_model_p : boolean, optional (default = False)
+            If True : a new model is trained using the _train_LSTM_autoencoder method
 
-        train_new_model_p: boolean, optional (default = False)
-            If True: a new model is trained using the _train_LSTM_autoencoder method
-
-        use_default_model_p: boolean, optional (default = None)
+        use_default_model_p : boolean, optional (default = None)
             If True and If traine_new_model is False: No model is loaded from disk, but the default graph in memory
             is used.
             It uses the tensorflow.get_default_graph() and tensorflow.get_default_session() under the hood.
@@ -210,36 +210,36 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        current_cumsum_p: ndarray, shape = [signal_length_p]
+        current_cumsum_p : ndarray, shape = [signal_length_p]
             The Cumulative Sum (CUMSUM) over the Root-Mean-Square (RMS) values of the current signal.
             Can be computed using the compute_input_signal functions.
 
-        current_rms_p: ndarray, shape = [signal_length_p]
+        current_rms_p : ndarray, shape = [signal_length_p]
             The Root-Mean-Square (RMS) values of the current signal.
             Can be computed using the compute_input_signal functions.
 
-        start_datetime_p: datetime
+        start_datetime_p : datetime
             The start timestamp of the current signal window
 
-        use_median_p: boolean, optional (default = False)
+        use_median_p : boolean, optional (default = False)
             If True: The _fine_grained_event_detection_step uses the median of the signal window to supress flucutations.
             If False: The _fine_grained_event_detection_step uses the mean of the signal window to supress flucutations.
 
-        return_MSE_p: boolean
+        return_MSE_p : boolean
             If true, a list of MSE values is returned. This list contains more values
             then the change_points_timestamps_list, as also the mse values of the TN
             are returned
 
-        cpu_only_p: boolean
+        cpu_only_p : boolean
             Use only cpus for predicting
 
         Returns
         -------
-            timestamps: list
-                List of datetime objects where events were detected in the current window
+        timestamps : list
+            List of datetime objects where events were detected in the current window
 
-            mse: float, optional
-                If return_MSE_p is set to true, also the mse_list is returned
+        mse : float, optional
+            If return_MSE_p is set to true, also the mse_list is returned
         """
 
         if cpu_only_p is True:
@@ -285,25 +285,25 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
 
     def compute_input_signal(self, current_p, period_length_p):
         """
-            Compute Root-Mean-Square(RMS) and the Cumulative Sum (CUMSUM) of the RMS values off the input current signal.
-            These values are computed over a multiple of the period_length_p (in samples).
-            It multiplies the value stored in the rms_periods_p parameter with the period_length_p to compute the output.
+        Compute Root-Mean-Square(RMS) and the Cumulative Sum (CUMSUM) of the RMS values off the input current signal.
+        These values are computed over a multiple of the period_length_p (in samples).
+        It multiplies the value stored in the rms_periods_p parameter with the period_length_p to compute the output.
 
-            Parameters
-            ----------
-            current_p: ndarray, shape = [signal_length_p]
-                The raw current signal.
+        Parameters
+        ----------
+        current_p : ndarray, shape = [signal_length_p]
+            The raw current signal.
 
-            period_length_p: int
-                The number of samples that are in one period of the signal
+        period_length_p : int
+            The number of samples that are in one period of the signal
 
-            Returns
-            -------
-                current_cumsum: ndarray, shape = [signal_length_p]
-                    The CUMSUM over the RMS values
+        Returns
+        -------
+        current_cumsum : ndarray, shape = [signal_length_p]
+            The CUMSUM over the RMS values
 
-                current_rms: ndarray, shape = [signal_length_p]
-                    The RMS values over the raw current_p signal.
+        current_rms : ndarray, shape = [signal_length_p]
+            The RMS values over the raw current_p signal.
 
            """
 
@@ -355,25 +355,25 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        ground_truth_events_p: list
+        ground_truth_events_p : list
             List of datetime objects, containing the ground truth event timestamps.
 
-        detected_events_p: list
+        detected_events_p : list
             List of datetime objects, containing the event detected by the event detector
 
-        number_of_samples_in_dataset_p: int
+        number_of_samples_in_dataset_p : int
             Number of samples, i.e. number of possible event positions in the dataset.
             When computing period wise features, like RMS, values use the corresponding number of samples.
             The value is used to compute the number of True Negative Events.
 
-        tolerance_limit_sec_p: int, optional (default = 1)
+        tolerance_limit_sec_p : int, optional (default = 1)
             The tolerance limit that is used to determine the scores of the confusion matrix.
 
-        return_events_list_p: bool, optional (default = False)
+        return_events_list_p : boolean, optional (default = False)
             If set to True, the events that are TP, FP, and FN are returned in the results dictionary
+
         Returns
         -------
-
         if grid_search_mode is set to True, only the f1score is returned, otherwise:
 
         results: dictionary
@@ -469,7 +469,16 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
         Function to train the autoencoder model, stores the model under the model_save_path parameter
         Returns:
 
-        optimizers.SGD(0.0001, momentum=0.9, nesterov=True)
+
+        Parameters
+        ----------
+        merge_mode_p : str, optional (default="concat")
+            Concatenation mode used to merge the forward and backward LSTM.
+        optimizer_p : keras.optimizers object, optional, (default=keras.optimizers.Adam())
+            Optimizer used for the autoencoder
+
+        Returns
+        -------
 
         """
 
@@ -499,15 +508,15 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        current_cumsum_p: ndarray, shape = [signal_length_p]
+        current_cumsum_p : ndarray, shape = [signal_length_p]
             The CUMSUM of the current RMS signal.
 
-        return_MSE_p: boolean
+        return_MSE_p : boolean
             If True, also returns the MSE value
 
         Returns
         ------
-        event_detected: boolean
+        event_detected : boolean
             If True: an event was detected
             If False: no event was detected
 
@@ -555,19 +564,19 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        current_rms_p: ndarray, shape = [signal_length_p]
+        current_rms_p : ndarray, shape = [signal_length_p]
             The RMS values over the current signal.
 
-        start_datetime_p: datetime
+        start_datetime_p : datetime
             The start time of the current window.
 
-        use_median_p: boolean
+        use_median_p : boolean
             If True: The _fine_grained_event_detection_step uses the median of the signal window to supress flucutations.
             If False: The _fine_grained_event_detection_step uses the mean of the signal window to supress flucutations.
 
         Returns
         -------
-        change_points_timestamps: list
+        change_points_timestamps : list
             List of datetime objects, with the detected event timestamps
 
         """
@@ -698,15 +707,15 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        indices_p: list
+        indices_p : list
             List containing the indices where events were detected in the current window
-        start_datetime_p: datetime
+        start_datetime_p : datetime
             The start time of the current window.
 
 
         Returns
         -------
-        timestamps: list
+        timestamps : list
             List of datetime objects, with the detected event timestamps
 
         """
@@ -723,72 +732,80 @@ class EventDet_MEED(BaseEstimator, ClassifierMixin):
 
 class EventDet_Jin(BaseEstimator, ClassifierMixin):
     """
-       Reference implementation for the following Event Detection algorithm:
-            Robust adaptive Event Detection in Non-Intrusive Load Monitoring
-            for Energy Aware Smart Facitlities
-            by: Yuanwei Jin, Eniye Tebekaemi, Mario berges, Lucio Soibelman
-            link to paper: https://ieeexplore.ieee.org/document/5947314/
+    Reference implementation for the following Event Detection algorithm:
+        Robust adaptive Event Detection in Non-Intrusive Load Monitoring
+        for Energy Aware Smart Facitlities
+        by: Yuanwei Jin, Eniye Tebekaemi, Mario berges, Lucio Soibelman
+        link to paper: https://ieeexplore.ieee.org/document/5947314/
 
 
-        The authors themselves do not provide proper default values:
-        But the algorithm was used by Yang et al in their paper:
-        Comperative Study of Event Detection Methods for Nonintrusive Appliance Load Monitoring
-        --> we take the default parameters from their evaluation
+    The authors themselves do not provide proper default values:
+    But the algorithm was used by Yang et al in their paper:
+    Comperative Study of Event Detection Methods for Nonintrusive Appliance Load Monitoring
+    --> we take the default parameters from their evaluation
 
-       The algorithm implementation follows the sklearn API
+    The algorithm implementation follows the sklearn API
 
-       Short Description of the algorithm:
+    Short Description of the algorithm:
 
-            Input: Required shape (2, window_size_n)
-                - the first array in the input is the pre-event-window
-                - the second array in the input is the detection_window
-                - each of those windows has size window_size_n
-                - they must be equally sized
-            Goodness of Fit (GOF) Based Algorithm
+        Input: Required shape (2, window_size_n)
+            - the first array in the input is the pre-event-window
+            - the second array in the input is the detection_window
+            - each of those windows has size window_size_n
+            - they must be equally sized
+        Goodness of Fit (GOF) Based Algorithm
 
-            Two Main steps:
-            1. Detect an event within each window
-            2. Locate the time-instant of change for the event
+        Two Main steps:
+        1. Detect an event within each window
+        2. Locate the time-instant of change for the event
 
-            Formulate everything as a Binary Hypothesis Test
-            Pre-event window distribution: G(x)  => reference distribution
-            Detection window distribution: F(x)
-
-
-            H0: G(x) = F(x)
-            H1: G(x) != F(x)
+        Formulate everything as a Binary Hypothesis Test
+        Pre-event window distribution: G(x)  => reference distribution
+        Detection window distribution: F(x)
 
 
-            Reject HO --> reject that the distributions are equal, i.e. there
-            is an event if: the x2 chi-squared GOF test is bigger then the
-            chi-squared threshold with n-1 degrees of freedom and a confidence level
-            The confidence_level should be already pre-computed: (1 - alpha)
+        H0: G(x) = F(x)
+        H1: G(x) != F(x)
 
-            both windows have samples that are iid
 
-            ASSUMPTION 1: The authors only mention the use of a sliding window, not of overlapping windows.
-            Furthermore, they do not talk about how they resolve multiple detections of the same event as
-            they would need to when using overlapping windows. Hence, we assume that no overlapping windows are used
+        Reject HO --> reject that the distributions are equal, i.e. there
+        is an event if: the x2 chi-squared GOF test is bigger then the
+        chi-squared threshold with n-1 degrees of freedom and a confidence level
+        The confidence_level should be already pre-computed: (1 - alpha)
 
-            ASSUMPTION 2: In addition to ASSUMPTION 1, the authors do not give information on how they determine the exact event timestamps
-            As this is critical for the evaluation of the algorithm and for applications relying on the events,
-            we do the following: In case the GOF test detects an event, we take the index of the most exteme value (minima or maxima)
-            in the detection window as the exact event point
+        both windows have samples that are iid
 
-       """
+        ASSUMPTION 1: The authors only mention the use of a sliding window, not of overlapping windows.
+        Furthermore, they do not talk about how they resolve multiple detections of the same event as
+        they would need to when using overlapping windows. Hence, we assume that no overlapping windows are used
 
+        ASSUMPTION 2: In addition to ASSUMPTION 1, the authors do not give information on how they determine the exact event timestamps
+        As this is critical for the evaluation of the algorithm and for applications relying on the events,
+        we do the following: In case the GOF test detects an event, we take the index of the most exteme value (minima or maxima)
+        in the detection window as the exact event point
+
+
+    """
     def __init__(self,window_size_n=10,confidence_level=0.95,alpha=0.01,E=30,minimum_transient_length_s=5,network_frequency=60):
         """
         Initialize the Function
         Default: use the value for the confidence level that is provided by the respective parameter
         If alpha is given, the confidence level is set to 1-alpha
 
-        Args:
-            window_size_n: size of the windows
-            confidence_level: 1-alpha
-            alpha: default None
-            E: default 30 minimum value for jumps in the power signal
-
+        Parameters
+        ----------
+        window_size_n : int, optional (default=10)
+            Window size used
+        confidence_level : float, optional (default=0.95)
+            Confidence level for the goodness-of-fit test: 1-alpha
+        alpha : float, optional (default=0.01)
+            Alpha error for the goodness-of-fit-test
+        E : int, optional (default=30)
+            Minimum amplitude of detectable jumps in the power signal
+        minimum_transient_length_s : int, optional (default=5)
+            Minimum length of detectable transient segments
+        network_frequency : int, optional (default=60)
+            Base frequency of the network the dataset was recorded in
         """
 
         if not confidence_level > 0 or not confidence_level <= 1:
@@ -815,19 +832,11 @@ class EventDet_Jin(BaseEstimator, ClassifierMixin):
 
         self.minimum_transient_length_s = minimum_transient_length_s
 
-    def fit(self, x, sampling_rate, y=None):
+    def fit(self, x, sampling_rate):
 
         """
 
-          Args:
-            x: input data, flat
-            sampling_rate: sampling rate
-            y: default None: labels, are not required here
-
-        Returns:
-            self
-
-        How to determine the proper window size n?
+        Used to determine the proper window size n?
 
         Guideline to do so:
 
@@ -850,12 +859,26 @@ class EventDet_Jin(BaseEstimator, ClassifierMixin):
 
         The function sets the attribute n_zero_ to the minimum window length
         Args:
-            X: pre-event training data
-            y: labels, always None here
+            X : pre-event training data
+            y : labels, always None here
 
         Returns:
             self
+
+        Parameters
+        ----------
+        x : ndarrary
+            Training data, computed by the compute_input_signal function
+
+        sampling_rate : int
+            Sampling rate the dataset was sampled with
+
+        Returns
+        -------
+
         """
+
+
 
         x = np.array(x).flatten()
 
@@ -881,18 +904,27 @@ class EventDet_Jin(BaseEstimator, ClassifierMixin):
 
     def predict(self, x, det_start_timestamp, det_end_timestamp, mean_window=True):
         """
-        Used to predict SINGLE or MULTIPLE INSTANCES
+        Used to predict a input window (pre-event and detection window)
 
         The window size n is saved in the parameter n_mean_ after fit() is called
         It can be used to feed the data appropriately
-        Args:
-            x(ndarray): pre-event and detection window with shape (2,window_size_n)
-            det_start_timestamp(datetime): datetime for the start of the detection_window
-            det_end_timestamp(datetime): datetime for the end of the detection_window
-            mean_window(bool): default=True, use the mean value that is calculated in the fit() function
 
 
-        Returns:
+        Parameters
+        ----------
+        x : ndarray
+            Pre-event and detection window with shape (2,window_size_n)
+        det_start_timestamp : datetime.datetime
+            Datetime for the start of the detection_window
+        det_end_timestamp : datetime.datetime
+            Datetime for the end of the detection_window
+        mean_window : boolean, optional (default=True)
+            Use the mean value that is calculated in the fit() function
+
+        Returns
+        -------
+        events : list
+            Lists of the events (indices) in the detection window
 
         """
 
@@ -964,13 +996,20 @@ class EventDet_Jin(BaseEstimator, ClassifierMixin):
 
     def compute_input_signal(self, voltage, current, period_length):
         """
-        Compoute the necessary active power, no smootheing etc applied
-        Args:
-            voltage:
-            current:
 
-        Returns:
-            active_power(ndarray)
+        Parameters
+        ----------
+        voltage : ndarray
+            Voltage signal, flat array
+        current : ndarray
+            Current signal, flat array
+        period_length : int
+            Compute the active power over period_length samples.
+
+        Returns
+        -------
+        active_power : ndarray
+            Active power signal
 
         """
         #compute the active power
@@ -1008,21 +1047,21 @@ class EventDet_Jin(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        ground_truth_events_p: list
+        ground_truth_events_p : list
             List of datetime objects, containing the ground truth event timestamps.
 
-        detected_events_p: list
+        detected_events_p : list
             List of datetime objects, containing the event detected by the event detector
 
-        number_of_samples_in_dataset_p: int
+        number_of_samples_in_dataset_p : int
             Number of samples, i.e. number of possible event positions in the dataset.
             When computing period wise features, like RMS, values use the corresponding number of samples.
             The value is used to compute the number of True Negative Events.
 
-        tolerance_limit_sec_p: int, optional (default = 1)
+        tolerance_limit_sec_p : int, optional (default = 1)
             The tolerance limit that is used to determine the scores of the confusion matrix.
 
-        return_events_list_p: bool, optional (default = False)
+        return_events_list_p : boolean, optional (default = False)
             If set to True, the events that are TP, FP, and FN are returned in the results dictionary
         Returns
         -------
@@ -1124,12 +1163,19 @@ class EventDet_Jin(BaseEstimator, ClassifierMixin):
         Here it is not necessary as the authors of the paper show
 
         Therefore: The formula: l_gof = SUM_i_to_n [square((y_i - x_i)) / x_i]
-        Args:
-            pre_event_window:
-            detection_window:
 
-        Returns:
+        Parameters
+        ----------
+        pre_event_window : ndarray
+            Pre-event window, flat array
+        detection_window : ndarray
+            Detection window, flat array
 
+
+        Returns
+        -------
+        l_gof : float
+            Goodness-of-fit measurement.
         """
 
         if len(pre_event_window) != len(detection_window):
@@ -1147,80 +1193,88 @@ class EventDet_Jin(BaseEstimator, ClassifierMixin):
 
 class EventDet_Zheng(BaseEstimator, ClassifierMixin):
     """
-       Reference implementation for the following Event Detection algorithm:
-            "A Supervised Event-Based Non-Intrusive Load Monitoring for Non-Linear Appliances"
+   Reference implementation for the following Event Detection algorithm:
+        "A Supervised Event-Based Non-Intrusive Load Monitoring for Non-Linear Appliances"
 
-            by: Zheng Zhuang, Hainan Chen, Xiaowei Luo
-            link to paper: https://www.researchgate.net/publication/324082872_A_Supervised_Event-Based_Non-Intrusive_Load_Monitoring_for_Non-Linear_Appliances
+        by: Zheng Zhuang, Hainan Chen, Xiaowei Luo
+        link to paper: https://www.researchgate.net/publication/324082872_A_Supervised_Event-Based_Non-Intrusive_Load_Monitoring_for_Non-Linear_Appliances
 
-       The algorithm implementation follows the sklearn API
+   The algorithm implementation follows the sklearn API
 
 
-       Short Description of the algorithm:
+   Short Description of the algorithm:
 
-            Input: Moving Window Approach --> Pre-Event window
+        Input: Moving Window Approach --> Pre-Event window
 
-                   1. The input is transformed into the active power signal and the current rms
-                   All values are period wise --> 1/60s temporal resolution
-                   2. The values are standardized
-                   2. Suppress minor fluctuations by using Mean Value Filtering and Moving Average Filtering
-                    ASSUMPTION 1: Mean Value Filtering and Moving Average Filtering essentially is the same
-                                  Hence, we only implemented one
+               1. The input is transformed into the active power signal and the current rms
+               All values are period wise --> 1/60s temporal resolution
+               2. The values are standardized
+               2. Suppress minor fluctuations by using Mean Value Filtering and Moving Average Filtering
+                ASSUMPTION 1: Mean Value Filtering and Moving Average Filtering essentially is the same
+                              Hence, we only implemented one
 
-            DBSCAN Algorithm for clustering the data:
-            Two adjacent steady states are considered as two clusters
-            Transient intervals are considered as noise or outliers
+        DBSCAN Algorithm for clustering the data:
+        Two adjacent steady states are considered as two clusters
+        Transient intervals are considered as noise or outliers
 
-            Three Hyperparameters: Epsilon (eps) , Mininum Points (min_pts), Window Size (window_size)
-                Standard Values from the paper:
-                - eps = 0.1
-                - min_pts = 25
-                - window_size = 300
+        Three Hyperparameters: Epsilon (eps) , Mininum Points (min_pts), Window Size (window_size)
+            Standard Values from the paper:
+            - eps = 0.1
+            - min_pts = 25
+            - window_size = 300
 
-            Two Main steps:
-            1. DBSCAN to detect events in the moving window
-                    - ASSUMPTION 5:
-                    There is no information in the paper, about what happens when more then 2 clusters
-                    are detected. The authors just mention that: "Besides, the window length is determined to make sure
-                    no more than two clusters are distinguished". Hence, we assume in cases with more than 2
-                    clusters no event is detected.
-                        - A consequence from this ist, that only one event can be detected per window
-                    - ASSUMPTION 6: The authors do not describe how they exactly determine their event timestamps
-                      Hence we assume, that the noisy points that belong to the real transient belong he longest sequence in the
-                      indices of the noisy points. Therefore, we determine the longest sequence and we take the central value
-                      of this sequence as the exact event point.
+        Two Main steps:
+        1. DBSCAN to detect events in the moving window
+                - ASSUMPTION 5:
+                There is no information in the paper, about what happens when more then 2 clusters
+                are detected. The authors just mention that: "Besides, the window length is determined to make sure
+                no more than two clusters are distinguished". Hence, we assume in cases with more than 2
+                clusters no event is detected.
+                    - A consequence from this ist, that only one event can be detected per window
+                - ASSUMPTION 6: The authors do not describe how they exactly determine their event timestamps
+                  Hence we assume, that the noisy points that belong to the real transient belong he longest sequence in the
+                  indices of the noisy points. Therefore, we determine the longest sequence and we take the central value
+                  of this sequence as the exact event point.
 
-            2. Postprocessing with two constraints to eliminate duplicates and to discard unreasonable results
-                2.1 |P_pre - P_post| > p_thre
-                    with P_pre and P_post = active power of pre and post event steady-state
-                        - ASSUMPTION 2: authors mention standard value for P_pre, but this is a likely a mistake as
-                        only a standard value for p_thre makes sense, hence we set p_thre= 25W
-                        - ASSUMPTION 4: We further assume this is the mean value of the datapoints in the pre and post
-                        event window
-                2.2 if (t(i + 1) - t(i)) < t_thre then discard t(i + 1)
-                    with t(i+1) and t(i) being to adjacent detect event timestamps,
-                    t_thre is the minimum time between to successive events
-                        - t_thre = 0.01s
+        2. Postprocessing with two constraints to eliminate duplicates and to discard unreasonable results
+            2.1 |P_pre - P_post| > p_thre
+                with P_pre and P_post = active power of pre and post event steady-state
+                    - ASSUMPTION 2: authors mention standard value for P_pre, but this is a likely a mistake as
+                    only a standard value for p_thre makes sense, hence we set p_thre= 25W
+                    - ASSUMPTION 4: We further assume this is the mean value of the datapoints in the pre and post
+                    event window
+            2.2 if (t(i + 1) - t(i)) < t_thre then discard t(i + 1)
+                with t(i+1) and t(i) being to adjacent detect event timestamps,
+                t_thre is the minimum time between to successive events
+                    - t_thre = 0.01s
 
-                The first postprocessing step 2.1 is performed in the event detector
-                The second postprocessing step 2.1 is performed after the event detection is finished:
-                it is handled by a additional postprocessing function: postprocess_min_event_distance()
-                This functions takes the following input:
-                    - a pandas dataframe with one column ["Event_Timestamp"]
-                    - and returns a dataframe with the filtered events
+            The first postprocessing step 2.1 is performed in the event detector
+            The second postprocessing step 2.1 is performed after the event detection is finished:
+            it is handled by a additional postprocessing function: postprocess_min_event_distance()
+            This functions takes the following input:
+                - a pandas dataframe with one column ["Event_Timestamp"]
+                - and returns a dataframe with the filtered events
        """
 
     def __init__(self, network_frequency, eps=0.1, min_pts=25, window_size=300, p_thre=25, t_thre=0.01):
         """
         Initialization Method for the Algorithm Class
 
-        Args:
-            network_frequency (int): Sampling Frequency of the dataset
-            eps (float): DBSCAN epsilon parameter
-            min_pts (int): DBSCAN minimum points paramter
-            window_size (int): window size in samples
-            p_thre (int): Power Threshold
-            t_thre (float): Time Threshold
+
+        Parameters
+        ----------
+        network_frequency: int
+            Frequency of the power network the data was recorded in (e.g. 50 Hz for Europe)
+        eps : float, optional (default=0.1)
+            DBSCAN epsilon parameter
+        min_pts : int, optional (default=25)
+            DBSCAN minimum points paramter
+        window_size : int, optional (default=300)
+            Window size in samoples
+        p_thre : int, optional (default=25)
+            Power Threshold
+        t_thre : float, optional (default=0.01)
+            Time Threshold
         """
 
         self.eps = eps
@@ -1240,15 +1294,7 @@ class EventDet_Zheng(BaseEstimator, ClassifierMixin):
 
     def predict(self, active_power, current_rms, start_timestamp, end_timestamp, return_non_postprocessed=True, return_power_thresholds=False):
         """
-
-        Args:
-            active_power (ndarray):
-            current_rms (ndarray):
-            start_timestamp (datetime): start timestamp of the window
-            end_timestamp (datetime): end timestamp of the window
-            return_non_postprocessed(boolean): return the events without doing postprocessing step 2.1
-            return_thresholds(boolean) returns the power threshold for postprocessing step 2.1
-
+        Predict if evetns are in the input
         Returns:
             events: list with event timestamp
 
@@ -1258,7 +1304,31 @@ class EventDet_Zheng(BaseEstimator, ClassifierMixin):
             optional:
             (mean_pre_average_power, mean_post_average_power): if return_thresholds is True
 
+
+        Parameters
+        ----------
+        active_power : ndarray
+            Active power signal, flat array
+        current_rms : ndarray
+            Current RMS values, flat array
+        start_timestamp : datetime.datetime
+            Start timestamp of the window
+        end_timestamp : datetime.datetime
+            End timestamp of the window
+
+
+        Returns
+        -------
+        events : list
+            List with event timestamps in the window
+        non_postprocessed_events : list, optional
+            If return_non_postprocessed is True, the non post-processed events are returned
+        (mean_pre_average_power, mean_post_average_power) : tuple, optional
+            If return_thresholds is True, the thresholds computed are returned
+
         """
+
+
         check_is_fitted(self, ["is_fitted"]) #check if fit() was called before
 
         #Reshape the input data into one 2-dimensional input
@@ -1343,19 +1413,27 @@ class EventDet_Zheng(BaseEstimator, ClassifierMixin):
 
     def compute_input_signal(self, voltage, current, period_length):
         """
-       1. The input is transformed into the active power signal and the current rms
+        1. The input is transformed into the active power signal and the current rms
            All values are period wise --> 1/60s temporal resolution
            1. The values are standardized
            2. Suppress minor fluctuations by using Mean Value Filtering and Moving Average Filtering, what is essentially the same
             ASSUMPTION 3: Rolling Window for averaging of size 3
-        Args:
-            voltage (ndarray):
-            current (ndarray):
-            period_length (zint): length of one period in samples
 
-        Returns:
-            active_power (ndarray):
-            current_rms (ndarray):
+        Parameters
+        ----------
+        voltage : ndarray
+            Voltage signal, flat array
+        current : ndarray
+            Current signal, flat array
+        period_length : int
+            Number of samples the features are computed over.
+
+        Returns
+        -------
+        active_power : ndarray
+            Active power signal
+        current_rms : ndarray
+            Root-Mean-Square values of the current
 
         """
         # 1. Compute the Metrics
@@ -1407,26 +1485,26 @@ class EventDet_Zheng(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        ground_truth_events_p: list
+        ground_truth_events_p : list
             List of datetime objects, containing the ground truth event timestamps.
 
-        detected_events_p: list
+        detected_events_p : list
             List of datetime objects, containing the event detected by the event detector
 
-        number_of_samples_in_dataset_p: int
+        number_of_samples_in_dataset_p : int
             Number of samples, i.e. number of possible event positions in the dataset.
             When computing period wise features, like RMS, values use the corresponding number of samples.
             The value is used to compute the number of True Negative Events.
 
-        tolerance_limit_sec_p: int, optional (default = 1)
+        tolerance_limit_sec_p : int, optional (default = 1)
             The tolerance limit that is used to determine the scores of the confusion matrix.
 
-        return_events_list_p: bool, optional (default = False)
+        return_events_list_p : boolean, optional (default = False)
             If set to True, the events that are TP, FP, and FN are returned in the results dictionary
         Returns
         -------
 
-        if grid_search_mode is set to True, only the f1score is returned, otherwise:
+        If grid_search_mode is set to True, only the f1score is returned, otherwise:
 
         results: dictionary
             A dictionary containing the following keys:  tp, fp, fn, tn, f1score, recall, precision, fpp, fpr
@@ -1518,6 +1596,22 @@ class EventDet_Zheng(BaseEstimator, ClassifierMixin):
         return results
 
     def _return_longest_sequence(self, sequence):
+        """
+        Return the longest sequence in the signal
+
+        Parameters
+        ----------
+        sequence : ndarray
+            Sequence of detections
+
+        Returns
+        -------
+        start_index_of_longest_sequence : int
+            Start index of the longest sequence detected
+        length_of_longest_sequence : int
+            Length of the longest sequence detected
+
+        """
         if len(sequence) == 0:
             raise ValueError("Can not find the longest sequence in an empty sequence")
 
@@ -1559,12 +1653,18 @@ class EventDet_Zheng(BaseEstimator, ClassifierMixin):
         If this distance (in time) is below a preset threshold one event is dropped
         Hence,  if (t(i + 1) - t(i)) < t_thre then discard t(i + 1)
 
-        Args:
-            event_list: list of datetime event objects
+        Parameters
+        ----------
+        event_list : list
+            List of datetime.datetime event objects
 
-        Returns:
+        Returns
+        -------
+        postprocessed_events : list
+            List of datetime.datetime event objects that have been post-processed
 
         """
+
         postprocessed_events = []
 
         event_already_appended = False  # flag to make sure no event is added two times
@@ -1585,210 +1685,207 @@ class EventDet_Zheng(BaseEstimator, ClassifierMixin):
 
 class EventDet_Barsim_Sequential(BaseEstimator, ClassifierMixin):
     """
-           Reference implementation for the following Event Detection algorithm:
-                "sequential clustering-based event detection for nonintrusive load monitoring"
+    Reference implementation for the following Event Detection algorithm:
+        "sequential clustering-based event detection for nonintrusive load monitoring"
 
-                by: Karim Said Barsim and Bin Yang
-                link to paper: https://pdfs.semanticscholar.org/74db/87eb3e17a2af1c4e411e2c0677ac0d20f9dc.pdf
+        by: Karim Said Barsim and Bin Yang
+        link to paper: https://pdfs.semanticscholar.org/74db/87eb3e17a2af1c4e411e2c0677ac0d20f9dc.pdf
 
-           The algorithm implementation follows the general sklearn API.
+    The algorithm implementation follows the general sklearn API.
 
-           Use the algorithm and this class as follows:
-           - create an instance of the algorithm class
-           - call the fit() method
-           - prepare the input window with the raw current and voltage values according to the description below
-           - call the compute_input_signal() method to compute the features the algorithm requires.
+    Use the algorithm and this class as follows:
+    - create an instance of the algorithm class
+    - call the fit() method
+    - prepare the input window with the raw current and voltage values according to the description below
+    - call the compute_input_signal() method to compute the features the algorithm requires.
 
-           ATTENTION: It is necessary to use the compute_input_signal() function, because the raw values handed
-           to the function are further used to ensure to correct input order of the input windows and to check
-           if the relative offsets are in line with the ones returned from the previous window.
-           The return values and offsets of the predict() function are further explained below.
+    ATTENTION: It is necessary to use the compute_input_signal() function, because the raw values handed
+    to the function are further used to ensure to correct input order of the input windows and to check
+    if the relative offsets are in line with the ones returned from the previous window.
+    The return values and offsets of the predict() function are further explained below.
 
-           - call the predict() method on the features to detect events in the window
-           - proceed with streaming the next window, depending on the result returned by the predict() method, as
-           described below.
+    - call the predict() method on the features to detect events in the window
+    - proceed with streaming the next window, depending on the result returned by the predict() method, as
+    described below.
 
-           Hence, there are three essential external methods available that are the central API of the algorithm:
-           fit(), compute_input_signal() and predict().
-           The fourth method _convert_relative_offset can be used to convert the offsets that are returned
-           by the predict() method which are related to the input data, as computed by the compute_input_signal() function
-           back to be relative to the raw input data, what is useful for the streaming process.
-
-
-           Short Description of the algorithm and the input it requires:
-
-                Input:
-                    real (P) and reactive powers (Q) at a time instant, approximately computed periodewise
-                    and averaged over periods.
-                    We compute 2 values per second.
-                    Every sample point at time t therefore has two measurements [P,Q]
-
-                    The input that is expected by the event detector can be obtained by calling the
-                    compute_input_signal method of the event detector.
-
-                    Due to the inner workings of the algorithm, the input that is needed is longer then the length of
-                    the initial input window X (with window_samples_n datapoints in it). Therefore, the input X_overall
-                    that is fed to the algorithm, will be split up into two arrays, namely the initial input window X.
-                    and the remaining datapoints after X, namely the X_future.
-                    We recommend feeding at least as many window_samples_n datapoints that occur after the input window X to the
-                    algorithm, i.e. the X_overall input should have a length of at least 2 times window_samples_n.
-
-                    The future_window_size_n parameter that is set during initialization determines the size of the
-                    X_future array.
-
-                    As you see in the description below, the datapoints from the X_future array are appended one by one
-                    two the input window X.
-
-                    ATTENTION:
-                    At the end, there are two cases, i.e. either an event is detected or not:
-                    If an event is detected, two indices are returned, the beginning and the end of the event-interval
-                    that was detected, else None is returned. The next fixed input window X that you should feed to the
-                    algorithm, should start at the end of the event-interval (i.e. the second index + 1 that is returned).
-                    So there is some overlap between the windows!
-                    If no event is detected, you should continue with the next window. Most of the data contains no event,
-                    hence, to speed up the algorithm, no overlap is created when no event was detected.
+    Hence, there are three essential external methods available that are the central API of the algorithm:
+    fit(), compute_input_signal() and predict().
+    The fourth method _convert_relative_offset can be used to convert the offsets that are returned
+    by the predict() method which are related to the input data, as computed by the compute_input_signal() function
+    back to be relative to the raw input data, what is useful for the streaming process.
 
 
+    Short Description of the algorithm and the input it requires:
 
-                The DBSCAN Algorithm is used for clustering the input data:
-                    It has three Hyperparameters: Epsilon (eps) , Mininum Points (min_pts), Window Size (window_size)
-                    The parameter values are not mentioned in the paper, hence we did an extensive grid search.
-                    With a focus on precision, instead of recall we recommend using.
-                    - eps = 0.05
-                    - min_pts = 3
-                    - window_size = 5
+        Input:
+            real (P) and reactive powers (Q) at a time instant, approximately computed periodewise
+            and averaged over periods.
+            We compute 2 values per second.
+            Every sample point at time t therefore has two measurements [P,Q]
 
+            The input that is expected by the event detector can be obtained by calling the
+            compute_input_signal method of the event detector.
 
-                In their paper, the authors define three event models, each of them oopses constraints a detected
-                event has to fullfill. In this implementation, we use the same model the authors have used in their
-                benchmark, i.e. Model 3. Model 3 is the most general one of the models, i.e. model 1 and model 2
-                are specialisations with more restrictions of event-model 3.
+            Due to the inner workings of the algorithm, the input that is needed is longer then the length of
+            the initial input window X (with window_samples_n datapoints in it). Therefore, the input X_overall
+            that is fed to the algorithm, will be split up into two arrays, namely the initial input window X.
+            and the remaining datapoints after X, namely the X_future.
+            We recommend feeding at least as many window_samples_n datapoints that occur after the input window X to the
+            algorithm, i.e. the X_overall input should have a length of at least 2 times window_samples_n.
 
+            The future_window_size_n parameter that is set during initialization determines the size of the
+            X_future array.
 
-                Event-model 3 is specified as follows:
-                For the definition and the algorithm we need to define two distinct points of each cluster, that are
-                important to compute multiple metrics.
-                    - u: is the index of the first sample (with respect to time) n the cluster Ci (all other points that are not in the
-                    cluster Ci have to have a smaller index thant u)
-                    - v: is the index of the last sample (with respect to time) in the cluster Ci
+            As you see in the description below, the datapoints from the X_future array are appended one by one
+            two the input window X.
 
-                A sequence of samples X is defined as an event if:
-                    (1) it contains at least two clusters C1 and C2 (besides the outlier cluster) and the outlier Cluster
-                    C0 can be non empty.
-
-                    (2) clusters C1 and C2 have a high temporal locality, i.e. Loc(Ci) >= 1 - temp_eps
-                    with Loc(Ci) = n_samples_in_Ci / (v - u + 1)
-                    i.e. there are at least two, non noise, clusters with a high temporal locality
-
-                    (3) clusters C1 and C2 do not interleave in the time domain.
-                    There is a point s in C1 for which all points n > s do not belong to C1 anymore, i.e. s is the upper
-                    bound of C1 in this case.
-                    There is also a point i in C2 for which all points n < i do not belong to C2 anymore, i.e. i is
-                    the lower bound of C2 in this case.
-                    (Note: changed naming here, to avoid confusion with the definition of u and v above, although
-                    the meaning is the same)
+            ATTENTION:
+            At the end, there are two cases, i.e. either an event is detected or not:
+            If an event is detected, two indices are returned, the beginning and the end of the event-interval
+            that was detected, else None is returned. The next fixed input window X that you should feed to the
+            algorithm, should start at the end of the event-interval (i.e. the second index + 1 that is returned).
+            So there is some overlap between the windows!
+            If no event is detected, you should continue with the next window. Most of the data contains no event,
+            hence, to speed up the algorithm, no overlap is created when no event was detected.
 
 
-                In order to fulfill these requirements we need to find at least two clusters that pass the checks.
-                More then two clusters are fine. Checks (1) and (2) are performed independently, check (3)
-                is performed for the remaining clusters that fullfill the pass the checks (1) and (2)
 
-                The model constraints are implemented in the _check_event_model_constraints() method.
-                If one intends to use another event model, this method has to be overwritten accordingly.
+        The DBSCAN Algorithm is used for clustering the input data:
+            It has three Hyperparameters: Epsilon (eps) , Mininum Points (min_pts), Window Size (window_size)
+            The parameter values are not mentioned in the paper, hence we did an extensive grid search.
+            With a focus on precision, instead of recall we recommend using.
+            - eps = 0.05
+            - min_pts = 3
+            - window_size = 5
 
-                By identifying two clusters that fulfill these requirements, we likely have discovered two
-                stationary segments, consisting of sample belonging to C1 and C2. In between we have the change interval
-                we are looking for, i.e. the event interval. The points in between the intervals are somehow considererd
-                to be the event, if one looks closely at the samples in Figure 1 of the paper, especially in subfigure c.
-                Hence all points that are in between the upper bound of C1 and the lower bound of C2, that are
-                within the noise cluster (See p. 80 of the Paper). The transient is noise, that is detected by the DBSCAN.
 
-                (Note: the upper bound of C1 < lower bound of C2, using this we can decide which cluster we name C1)
-                We name points in between the event_interval_t (X_t in the paper).
+        In their paper, the authors define three event models, each of them oopses constraints a detected
+        event has to fullfill. In this implementation, we use the same model the authors have used in their
+        benchmark, i.e. Model 3. Model 3 is the most general one of the models, i.e. model 1 and model 2
+        are specialisations with more restrictions of event-model 3.
 
-                The algorithm can be divided in two steps, namely, a forward and a backward pass.
-                The forward pass is used to find events, i.e. change-point intervals, and the backward pass is used
-                to improve the segmentation of the input signal into steady-state and event intervals.
 
-                1. Forward pass:
-                        For a given input vector X with length n o the following:
-                            1. Take the next sample x_n+1 and append it to X
-                            2. Update the clustering and the clustering structure, using the DBSCAN Algorithm
-                            By doing this we get clusters C1 and C2 and a possible event_interval_t
-                            3. Compute the loss for the given cluster and the given event model (i.e. Model 3)
-                               The loss for a signal segment X and two clusters C1 and C2 is defined as follows,
-                               it counts the number of samples that need to be corrected in order for the segment
-                               to match the event model:
-                               L(X) = a + b + c with
-                               a: number of samples n from C2 with n <= u, with u being the lower bound of
-                               the event_interval_t
-                               b: number of samples n from C1 with n >= v, with v being the upper bound of
-                               the  event_interval_t
-                               c: number of samples n between u < n < v, so number of samples n in the event_interval_t that
-                               belong to C1 or C2, i.e. to the stationary signal.
+        Event-model 3 is specified as follows:
+        For the definition and the algorithm we need to define two distinct points of each cluster, that are
+        important to compute multiple metrics.
+            - u: is the index of the first sample (with respect to time) n the cluster Ci (all other points that are not in the
+            cluster Ci have to have a smaller index thant u)
+            - v: is the index of the last sample (with respect to time) in the cluster Ci
 
-                               We compute this loss for all cluster combinations, i.e. if the event model checks are
-                               passed by three (non noise) clusters, then we compute two loss values
+        A sequence of samples X is defined as an event if:
+            (1) it contains at least two clusters C1 and C2 (besides the outlier cluster) and the outlier Cluster
+            C0 can be non empty.
 
-                            4. Check if L(X) <= loss_thresh.
-                            If not go to step 1. and take the next sample.
+            (2) clusters C1 and C2 have a high temporal locality, i.e. Loc(Ci) >= 1 - temp_eps
+            with Loc(Ci) = n_samples_in_Ci / (v - u + 1)
+            i.e. there are at least two, non noise, clusters with a high temporal locality
 
-                            Note: we have included a savety mechanism to prevent memory errors: if the size of X is bigger
-                            then future_window_size_n times of the original window size, then we return that
-                            no event was detected and the user should continue with the next input as described in the
-                            input section of the documentation.
+            (3) clusters C1 and C2 do not interleave in the time domain.
+            There is a point s in C1 for which all points n > s do not belong to C1 anymore, i.e. s is the upper
+            bound of C1 in this case.
+            There is also a point i in C2 for which all points n < i do not belong to C2 anymore, i.e. i is
+            the lower bound of C2 in this case.
+            (Note: changed naming here, to avoid confusion with the definition of u and v above, although
+            the meaning is the same)
 
-                            If yes:
-                               if multiple cluster combinations have passed the loss_thresh, then declare
-                               an event as detected  detected, with the change-interval event_interval_t
-                               that results from the cluster combination with the lowest loss L(X)
-                               Go to step 5 and start the backward pass.
 
-                2. Backward pass:
-                            1. Delete the oldest sample x1 from the segment (i.e the first sample in X)
-                            2. Update the clustering and the clustering structure, using the DBSCAN Algorithm
-                            3. Check the loss L(X) for the detected segment and the detected event_interval_t.
-                            If L(X) <= loss_thresh, go to step 2 again.
-                            If L(X=) >= loss_thresh, i.e. if without the removed sample no event is detected anymore
-                            reinsert the last-sample again and declare the segment X as a balanced event
+        In order to fulfill these requirements we need to find at least two clusters that pass the checks.
+        More then two clusters are fine. Checks (1) and (2) are performed independently, check (3)
+        is performed for the remaining clusters that fullfill the pass the checks (1) and (2)
 
-                After this is done, the process restarts from the first sample of C2 (x_v).
+        The model constraints are implemented in the _check_event_model_constraints() method.
+        If one intends to use another event model, this method has to be overwritten accordingly.
 
-                The whole algorithm is window-based, with a initial window size of window_size_n
-                The event detector has the following hyperparameters that can be fine-tuned.
-                    - DBSCAN Epsilon (dbscan_eps)
-                    - DBSCAN Mininum Points (dbscan_min_pts)
-                    - Window Size (window_size_n)
-                    - Threshold for the Loss-Function (loss_thresh)
-                    - Temporal Locality Epsilon (temp_eps)
+        By identifying two clusters that fulfill these requirements, we likely have discovered two
+        stationary segments, consisting of sample belonging to C1 and C2. In between we have the change interval
+        we are looking for, i.e. the event interval. The points in between the intervals are somehow considererd
+        to be the event, if one looks closely at the samples in Figure 1 of the paper, especially in subfigure c.
+        Hence all points that are in between the upper bound of C1 and the lower bound of C2, that are
+        within the noise cluster (See p. 80 of the Paper). The transient is noise, that is detected by the DBSCAN.
 
-                Non algorithm related parameters that can be adapted are:
-                    - Number of datapoints after the input window that are fed to the algorithm future_window_size_n
-                    - Flag to turn input window order checks on or of perform_input_order_checks
-                    (see also the details in the input section of this documentation for the two parameters above)
+        (Note: the upper bound of C1 < lower bound of C2, using this we can decide which cluster we name C1)
+        We name points in between the event_interval_t (X_t in the paper).
 
-                If you want to debug the inner workings of the algorithm, i.e. get plots on the clustering etc. .
-                then initialize the estimator with debugging_mode=False.
-                Using this in a graphical environment, like a jupyter notebook is highly recommended.
-                This provides a tool to understand the inner workings of the algorithm in detail.
-           """
+        The algorithm can be divided in two steps, namely, a forward and a backward pass.
+        The forward pass is used to find events, i.e. change-point intervals, and the backward pass is used
+        to improve the segmentation of the input signal into steady-state and event intervals.
+
+        1. Forward pass:
+                For a given input vector X with length n o the following:
+                    1. Take the next sample x_n+1 and append it to X
+                    2. Update the clustering and the clustering structure, using the DBSCAN Algorithm
+                    By doing this we get clusters C1 and C2 and a possible event_interval_t
+                    3. Compute the loss for the given cluster and the given event model (i.e. Model 3)
+                       The loss for a signal segment X and two clusters C1 and C2 is defined as follows,
+                       it counts the number of samples that need to be corrected in order for the segment
+                       to match the event model:
+                       L(X) = a + b + c with
+                       a: number of samples n from C2 with n <= u, with u being the lower bound of
+                       the event_interval_t
+                       b: number of samples n from C1 with n >= v, with v being the upper bound of
+                       the  event_interval_t
+                       c: number of samples n between u < n < v, so number of samples n in the event_interval_t that
+                       belong to C1 or C2, i.e. to the stationary signal.
+
+                       We compute this loss for all cluster combinations, i.e. if the event model checks are
+                       passed by three (non noise) clusters, then we compute two loss values
+
+                    4. Check if L(X) <= loss_thresh.
+                    If not go to step 1. and take the next sample.
+
+                    Note: we have included a savety mechanism to prevent memory errors: if the size of X is bigger
+                    then future_window_size_n times of the original window size, then we return that
+                    no event was detected and the user should continue with the next input as described in the
+                    input section of the documentation.
+
+                    If yes:
+                       if multiple cluster combinations have passed the loss_thresh, then declare
+                       an event as detected  detected, with the change-interval event_interval_t
+                       that results from the cluster combination with the lowest loss L(X)
+                       Go to step 5 and start the backward pass.
+
+        2. Backward pass:
+                    1. Delete the oldest sample x1 from the segment (i.e the first sample in X)
+                    2. Update the clustering and the clustering structure, using the DBSCAN Algorithm
+                    3. Check the loss L(X) for the detected segment and the detected event_interval_t.
+                    If L(X) <= loss_thresh, go to step 2 again.
+                    If L(X=) >= loss_thresh, i.e. if without the removed sample no event is detected anymore
+                    reinsert the last-sample again and declare the segment X as a balanced event
+
+        After this is done, the process restarts from the first sample of C2 (x_v).
+
+        The whole algorithm is window-based, with a initial window size of window_size_n
+        The event detector has the following hyperparameters that can be fine-tuned.
+            - DBSCAN Epsilon (dbscan_eps)
+            - DBSCAN Mininum Points (dbscan_min_pts)
+            - Window Size (window_size_n)
+            - Threshold for the Loss-Function (loss_thresh)
+            - Temporal Locality Epsilon (temp_eps)
+
+        Non algorithm related parameters that can be adapted are:
+            - Number of datapoints after the input window that are fed to the algorithm future_window_size_n
+            - Flag to turn input window order checks on or of perform_input_order_checks
+            (see also the details in the input section of this documentation for the two parameters above)
+
+        If you want to debug the inner workings of the algorithm, i.e. get plots on the clustering etc. .
+        then initialize the estimator with debugging_mode=False.
+        Using this in a graphical environment, like a jupyter notebook is highly recommended.
+        This provides a tool to understand the inner workings of the algorithm in detail.
+   """
 
     def __init__(self, dbscan_eps=0.05, dbscan_min_pts=3, window_size_n=5, future_window_size_n=5,
                  loss_thresh=40, temp_eps=0.8, debugging_mode=False, dbscan_multiprocessing=False, network_frequency=60, **kwargs):
         """
 
-
-        Args:
+         Args:
             dbscan_eps (float): Epsilon Parameter for the DBSCAN algorithm
             dbscan_min_pts (int): Minimum Points Parameter for the DBSCAN algorithm
-            window_size_n (int): Window Size
-            future_window_size_n (int): Maximum Number of samples that are gradually added to the window_size_n window.
-            window_size_n +n future_window_size_n is the maximum possible window, then no event detected is returned
-            in case.
-            loss_thresh (int): trehshold fopr the loss-function
-            temp_eps (float):  temporal locality epsilon
-            perform_input_order_checks: check the correct input order before processing the input, as described in
-            the doc-string
+            window_size_n (int):
+            future_window_size_n (int):
+
+            loss_thresh (int):
+            temp_eps (float):  t
+            perform_input_order_checks:
             debugging_mode (bool): activate if plots of the dbscan clustering shall be shown
             grid_search_mode: activate to adapt the score function, if you want to perfrom grid-search
             dbscan_multiprocessing (bool): default=False, if set to true multiple processes are used in the dbscan algorithm.
@@ -1796,7 +1893,32 @@ class EventDet_Barsim_Sequential(BaseEstimator, ClassifierMixin):
             paramter to True, results in warnings by sklearn and the multiprocessing library, as no additional subprocesses can
             be spawned by the processes.
 
-
+        Parameters
+        ----------
+        dbscan_eps : float, optional (default=0.05)
+            Epsilon Parameter for the DBSCAN algorithm
+        dbscan_min_pts : int, optional (default=3)
+            Minimum Points Parameter for the DBSCAN algorithm
+        window_size_n : int, optional (default=5)
+            Window Size
+        future_window_size_n : int, optional (default=5)
+            Maximum Number of samples that are gradually added to the window_size_n window.
+            window_size_n +n future_window_size_n is the maximum possible window, then no event detected is returned
+            in case.
+        loss_thresh : int, optional (default=40)
+            Threshold for the loss-function
+        temp_eps : float, optional (default=0.8)
+            Temporal locality epsilon
+        debugging_mode : boolean, optional (default=False)
+            Activate if plots of the dbscan clustering shall be shown
+        dbscan_multiprocessing : boolean, optional (default=False)
+            default=False, if set to true multiple processes are used in the dbscan algorithm.
+            If the Barsim_Sequential event detector is used within a multiprocessing environment, turning the dbscan_multiprocessing
+            parameter to True, results in warnings by sklearn and the multiprocessing library, as no additional subprocesses can
+            be spawned by the processes.
+        network_frequency : int, optional (default=60)
+            Frequency of the power network the data was recorded at.
+        kwargs** : other keyword arguments
         """
 
 
@@ -1836,11 +1958,16 @@ class EventDet_Barsim_Sequential(BaseEstimator, ClassifierMixin):
         """
         Predict if the input provided contains an event or not.
         The input provided should be computed by the compute_input_signal function of this class.
-        Args:
-            X_overall (ndarray): Input computed by compute_input_signal function.
 
-        Returns:
-            event_interval_indices (tuple): (start_index, end_index), if no event detected None is returned
+        Parameters
+        ----------
+        X_overall:  ndarray
+            Input computed by compute_input_signal function.
+
+        Returns
+        -------
+        event_interval_indices : tuple
+            (start_index, end_index), if no event detected None is returned
 
         """
         # Check if fit was called before
@@ -1987,6 +2114,7 @@ class EventDet_Barsim_Sequential(BaseEstimator, ClassifierMixin):
 
 
             return (event_start, event_end)
+
         else:
             # also for the input order check
             # in case no event is detected, the user should feed back the last window_size_n samples of X.
@@ -2005,11 +2133,15 @@ class EventDet_Barsim_Sequential(BaseEstimator, ClassifierMixin):
         Function to compute the loss values of the different cluster combinations.
         The formula for the loss, is explained in the doc-string in step 3 of the forward pass.
 
-        Args:
-            checked_clusters (list): of triples (c1, c2, event_interval_t)
+        Parameters
+        ----------
+        checked_clusters: list
+            Clusters checked by step 2
 
-        Returns:
-            event_cluster_combination (tuple): triple of the winning cluster combination
+        Returns
+        -------
+        event_cluster_combination: dictionary
+            Event cluster combinations that have passed the step 3 check
 
         """
 
@@ -2075,12 +2207,10 @@ class EventDet_Barsim_Sequential(BaseEstimator, ClassifierMixin):
             Loc is the temporal locality metric of each cluster_i.
 
 
-        Args:
-            X (ndarray): input window, shape=(n_samples, 2)
-
-        Returns:
-            None
-
+        Parameters
+        ----------
+        X : ndarray
+            Input
 
         """
 
@@ -2158,13 +2288,21 @@ class EventDet_Barsim_Sequential(BaseEstimator, ClassifierMixin):
         This roleback happens at to positions in the code (i.e. after the model constraints are evaluated and after
         the loss computation). Therefore, it is encapsulated in this function.
 
-        Args:
-            status (string): either "continue" or "break"
-            i: current iteration index of the datapoint
-            event_cluster_combination_balanced:
-            event_cluster_combination_below_loss:
 
-        Returns:
+        Parameters
+        ----------
+        status : str
+            Status after the backward pass check.
+            Either "continue" or "break"
+        event_cluster_combination_balanced : dictionary
+            Balanced event cluster combinations
+        i : int
+            current iteration index of the datapoint
+        event_cluster_combination_below_loss : dictionary
+            Event clusters combinations smaller then the loss value
+
+        Returns
+        -------
 
         """
         if status == "break":
@@ -2208,19 +2346,21 @@ class EventDet_Barsim_Sequential(BaseEstimator, ClassifierMixin):
             raise ValueError("Status code does not exist")
 
     def _check_event_model_constraints(self):
+
         """
+
         Checks the constraints the event model, i.e. event model 3, opposes on the input data.
         It uses the clustering_structure attribute, that is set in the _update_clustering() function.
 
-        Arguments:
 
-        Returns:
-            checked_clusters (list): list of triples (c1, c2, event_interval_t)
-                                    with c1 being the identifier of the first cluster, c2 the second cluster
-                                    in the c1 - c2 cluster-combination, that have passed the model
-                                    checks. The event_interval_t are the indices of the datapoints in between the two
-                                    clusters.
-
+        Returns
+        -------
+        checked_clusters : list
+            List of triples (c1, c2, event_interval_t)
+            with c1 being the identifier of the first cluster, c2 the second cluster
+            in the c1 - c2 cluster-combination, that have passed the model
+            checks. The event_interval_t are the indices of the datapoints in between the two
+            clusters.
 
         """
 
@@ -2352,6 +2492,7 @@ class EventDet_Barsim_Sequential(BaseEstimator, ClassifierMixin):
 
     def compute_input_signal(self, voltage, current, period_length, original_non_log=False):
         """
+
         This functions uses the instantaneous voltage and current signals to compute the real (P) and reactive power (Q).
         The period_length has to divide length of the input signals evenly, i.e. no remainder.
         If this is not the case, an exception is raised.
@@ -2375,11 +2516,31 @@ class EventDet_Barsim_Sequential(BaseEstimator, ClassifierMixin):
 
 
         Returns:
-            X (ndarray): feature vector with active and reactive power, with shape(window_size_n,2).
+            X (ndarray): Feature vector with active and reactive power, with shape(window_size_n,2).
                          The first component at time t is the active, the second one the reactive power.
                          The active and reactive power are per values per second.
 
 
+        Parameters
+        ----------
+        voltage : ndarray
+            Voltage signal, flat array
+        current : ndarray
+            Current signal, flat array
+        period_length : int
+            Number of samples that features are computed over
+            Usually, length of a period for the given dataset
+            example: sampling_rate=10kHz, 50Hz basefrequency,
+            10kHz / 50 = 200 samples / period
+        original_non_log : boolean, optional (default=False)
+            False, if set to True, the non-logarithmized data is returned.
+
+        Returns
+        -------
+        X : ndarray
+            Feature vector with active and reactive power, with shape(window_size_n,2)
+             The first component at time t is the active, the second one the reactive power
+             The active and reactive power are per values per second
 
         """
 
@@ -2429,14 +2590,18 @@ class EventDet_Barsim_Sequential(BaseEstimator, ClassifierMixin):
         "To convert the relative offset, the method needs the period_length of the raw data. "
                              "Either call the compute_input_signal() method first (the parameter is set in there)"
                              "or provided it to the method "
+        Parameters
+        ----------
+        relative_offset : int
+            The offset that needs to be converted
+        raw_period_length : int, optional (default=None)
+            Length in samples of one period in the original (the target) raw data
 
+        Returns
+        -------
+        target_offset : int
+            Offset relative to the raw (target) input
 
-        Args:
-            relative_offset (int): the offset that needs to be converted
-            raw_period_length (int): length in samples of one period in the original (the target) raw data
-
-        Returns:
-            target_offset (int): offset relative to the raw (target) input
         """
 
         if raw_period_length is None:
@@ -2467,6 +2632,21 @@ class EventDet_Barsim_Sequential(BaseEstimator, ClassifierMixin):
 
             event_timestamp (datetime)
 
+        Parameters
+        ----------
+        index : int
+            Index to convert, relative to the input window. Features that have been used to do the event
+            detection and to get the index, have to be computed according to the compute_input_signal function
+            Otherwise the timestamps returned by this function can be wrong
+        start_timestamp_of_window : datetime.datetime
+            Start timestamp of the window the event index is located in
+            network_frequency(int): basic network frequency
+
+
+        Returns
+        -------
+        event_timestamp : datetime.datetime
+            Timestamp the index was converted to
         """
 
         seconds_since_start = index / 2# 2 values per second
@@ -2503,21 +2683,21 @@ class EventDet_Barsim_Sequential(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        ground_truth_events_p: list
+        ground_truth_events_p : list
             List of datetime objects, containing the ground truth event timestamps.
 
-        detected_events_p: list
+        detected_events_p : list
             List of datetime objects, containing the event detected by the event detector
 
-        number_of_samples_in_dataset_p: int
+        number_of_samples_in_dataset_p : int
             Number of samples, i.e. number of possible event positions in the dataset.
             When computing period wise features, like RMS, values use the corresponding number of samples.
             The value is used to compute the number of True Negative Events.
 
-        tolerance_limit_sec_p: int, optional (default = 1)
+        tolerance_limit_sec_p : int, optional (default = 1)
             The tolerance limit that is used to determine the scores of the confusion matrix.
 
-        return_events_list_p: bool, optional (default = False)
+        return_events_list_p : boolean, optional (default = False)
             If set to True, the events that are TP, FP, and FN are returned in the results dictionary
         Returns
         -------
@@ -2675,16 +2855,29 @@ class EventDet_Liu_Ripple(BaseEstimator, ClassifierMixin):
 
     def __init__(self, median_filter_window=9, q_ripple_window_size=10, power_threshold=10, perform_input_order_checks=True, **kwargs):
         """
-
         Args:
             median_filter_window (int): size of the median filter window in samples
             default=9 samples with a sampling rate of 1Hz,
             q_ripple_window_size (int): size of the window for the ripple mitigation step (step 2)
             The window size is 2q+1, with q defaulting to 10.
             power_threshold (int): threshold applied to the absolute power delta signal to detect the events
-            perform_input_order_check(bool): if True, then it is checked if the windows overlap with 2q (2*q_ripple_treshold
+            perform_input_order_check(bool): if True, then it is checked if the windows overlap with 2q (2*q_ripple_threshold
             values as demanded by the algorithm.
             **kwargs:
+
+        Parameters
+        ----------
+        median_filter_window : int, optional (default=9)
+            Size of the median filter window in samples
+        q_ripple_window_size : int, optional (default=10)
+            Size of the window for the ripple mitigation step (step 2)
+            The window size is 2q+1, with q defaulting to 10.
+        power_threshold : int, optional (default=10)
+            Threshold applied to the absolute power delta signal to detect the events
+        perform_input_order_checks: boolean, optional (default=True)
+            If True, then it is checked if the windows overlap with 2q (2*q_ripple_threshold
+        kwargs** : optional keyword arguments
+
         """
 
         self.median_filter_window = median_filter_window
@@ -2699,9 +2892,13 @@ class EventDet_Liu_Ripple(BaseEstimator, ClassifierMixin):
         doc-string.
 
 
-        Args:
-            X (ndarray): dim=(1,) input data
-        Returns:
+        Parameters
+        ----------
+        X : narray
+            Input array, flat array, as computed by the compute_input_signal function
+
+        Returns
+        -------
 
         """
 
@@ -2720,9 +2917,9 @@ class EventDet_Liu_Ripple(BaseEstimator, ClassifierMixin):
                                  "If you do not want to see "
                                  "this message anymore, set perform_input_order_checks=False during initialization!")
 
-    def fit(self, X=None, y=None):
+    def fit(self):
         """
-        If no input data is specified, do not
+        Does nothing
 
         """
         self.is_fitted = True
@@ -2730,11 +2927,17 @@ class EventDet_Liu_Ripple(BaseEstimator, ClassifierMixin):
     def predict(self, X):
         """
         Perform the event detection on the data provided
-        Args:
-            X (ndarray): dim=(1,) input data, the active power values computed by the compute_input_signal function
 
-        Returns:
-            event_indices (list): list of the event indices
+        Parameters
+        ----------
+        X : ndarray
+            dim=(1,) input data, the active power values computed by the compute_input_signal function
+
+        Returns
+        -------
+        event_indices : list
+            List of the event indices
+
         """
 
         # Check if fit was called before
@@ -2783,11 +2986,15 @@ class EventDet_Liu_Ripple(BaseEstimator, ClassifierMixin):
 
         In the boundary cases, the first and the last records are repeated to fill the window.
 
-        Args:
-            X (ndarray): dim=(1,) input data, the active power values computed by the compute_input_signal function
+        Parameters
+        ----------
+        X : ndarray
+            dim=(1,) input data, the active power values computed by the compute_input_signal function
 
-        Returns:
-            X_median_filtered (ndarray): dim=(1,) median filtered input signal
+        Returns
+        -------
+        X_median_filtered : ndarray
+            dim=(1,) median filtered input signal
 
         """
 
@@ -2812,7 +3019,6 @@ class EventDet_Liu_Ripple(BaseEstimator, ClassifierMixin):
 
     def _ripple_mitigation(self, X_median_filtered):
         """
-
         Ripple mitigation algorithm.
 
         1. Compute difference (power_delta), between consecutive power samples
@@ -2837,13 +3043,19 @@ class EventDet_Liu_Ripple(BaseEstimator, ClassifierMixin):
         that have been left out. Hence, we need an overlap of 2q samples.
 
 
-        Args:
-            X_median_filtered (ndarray): dim=(1,) median filtered input signal, as returned from the _median_filter function
+        Parameters
+        ----------
+        X_median_filtered : ndarray
+            dim=(1,) median filtered input signal, as returned from the _median_filter function
 
-        Returns:
-            absolute_power_delta (ndarray): dim=(1,) ripple mitigated, absolute power delta values
+        Returns
+        -------
+        absolute_power_delta : ndarray
+            dim=(1,) ripple mitigated, absolute power delta values
 
         """
+
+
 
         power_delta = np.diff(X_median_filtered)
         power_delta = np.concatenate([power_delta, [power_delta[-1]]]) #duplicate the last value, to have the same array length again
@@ -2897,14 +3109,18 @@ class EventDet_Liu_Ripple(BaseEstimator, ClassifierMixin):
         "To convert the relative offset, the method needs the period_length of the raw data. "
                              "Either call the compute_input_signal() method first (the parameter is set in there)"
                              "or provided it to the method "
+        Parameters
+        ----------
+        relative_offset : int
+            The offset that needs to be converted
+        raw_period_length : int, optional (default=None)
+            Length in samples of one period in the original (the target) raw data
 
+        Returns
+        -------
+        target_offset : int
+            Offset relative to the raw (target) input
 
-        Args:
-            relative_offset (int): the offset that needs to be converted
-            raw_period_length (int): length in samples of one period in the original (the target) raw data
-
-        Returns:
-            target_offset (int): offset relative to the raw (target) input
         """
 
         if raw_period_length is None:
@@ -2921,21 +3137,36 @@ class EventDet_Liu_Ripple(BaseEstimator, ClassifierMixin):
 
     def _convert_index_to_timestamp(self, index, start_timestamp_of_window, network_frequency):
         """
-        Function to convert an index that is relative to the start_timestamp of a window that was computed
-        by the compute_input_signal function to a timestamp object.
+       Function to convert an index that is relative to the start_timestamp of a window that was computed
+       by the compute_input_signal function to a timestamp object.
 
-        Args:
-            index (int): index to convert, relative to the input window. Features that have been used to do the event
-            detection and to get the index, have to be computed according to the compute_input_signal function.
-            Otherwise the timestamps returned by this function can be wrong.
+       Args:
+           index (int): index to convert, relative to the input window. Features that have been used to do the event
+           detection and to get the index, have to be computed according to the compute_input_signal function.
+           Otherwise the timestamps returned by this function can be wrong.
 
-            start_timestamp_of_window(datetime): start timestamp of the window the event index is located in.
-            network_frequency(int): basic network frequency
-        Returns:
+           start_timestamp_of_window(datetime): start timestamp of the window the event index is located in.
+           network_frequency(int): basic network frequency
+       Returns:
 
-            event_timestamp (datetime)
+           event_timestamp (datetime)
 
-        """
+       Parameters
+       ----------
+       index : int
+           Index to convert, relative to the input window. Features that have been used to do the event
+           detection and to get the index, have to be computed according to the compute_input_signal function
+           Otherwise the timestamps returned by this function can be wrong
+       start_timestamp_of_window : datetime.datetime
+           Start timestamp of the window the event index is located in
+           network_frequency(int): basic network frequency
+
+
+       Returns
+       -------
+       event_timestamp : datetime.datetime
+           Timestamp the index was converted to
+       """
 
         seconds_since_start = index * (1 / network_frequency)
         event_timestamp = start_timestamp_of_window + timedelta(seconds=seconds_since_start)
@@ -2951,21 +3182,27 @@ class EventDet_Liu_Ripple(BaseEstimator, ClassifierMixin):
 
 
 
-        Args:
-            voltage (ndarray): one-dimensional voltage array
-            current (ndarray: one-dimensional current array
-            period_length (int): length of a period for the given dataset.
-                           example: sampling_rate=10kHz, 50Hz basefrequency,
-                           10kHz / 50 = 200 samples / period
+
+        Parameters
+        ----------
+        voltage : ndarray
+            Voltage array, flat array
+        current : ndarray
+            Current array, flat array
+        period_length : int
+            Number of samples that features are computed over
+            Usually, length of a period for the given dataset
+            example: sampling_rate=10kHz, 50Hz basefrequency,
+            10kHz / 50 = 200 samples / period
 
 
-        Returns:
-            active_power_P (ndarray): feature vector with real/active with shape(window_size_n).
-
-
-
+        Returns
+        -------
+        active_power_P : ndarray
+            Feature vector with real/active with shape(window_size_n).
 
         """
+
 
         voltage, current = utils.check_X_y(voltage, current, force_all_finite=True, ensure_2d=False, allow_nd=False,
                                            y_numeric=True,
@@ -2997,13 +3234,19 @@ class EventDet_Liu_Ripple(BaseEstimator, ClassifierMixin):
         As the Liu event detector is very sensible, this improves the results remarkably
         and is a legit step for fine tuning the algorithm.
 
-        Args:
-            events_detected(list) : list of detected events, as datetime.datetime objects
-            postprocessing_limit (int): value in seconds that determines the range in which events
+
+        Parameters
+        ----------
+        events_detected : list
+            List of detected events, as datetime.datetime objects
+        postprocessing_limit : int
+            Value in seconds that determines the range in which events
             are discarded.
 
-        Returns:
-            events_detected_postprocessed (ndarary): list of the postprocessed events
+        Returns
+        -------
+        events_detected_postprocessed : ndarray
+            List of the post-processed events
 
         """
 
@@ -3049,21 +3292,21 @@ class EventDet_Liu_Ripple(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        ground_truth_events_p: list
+        ground_truth_events_p : list
             List of datetime objects, containing the ground truth event timestamps.
 
-        detected_events_p: list
+        detected_events_p : list
             List of datetime objects, containing the event detected by the event detector
 
-        number_of_samples_in_dataset_p: int
+        number_of_samples_in_dataset_p : int
             Number of samples, i.e. number of possible event positions in the dataset.
             When computing period wise features, like RMS, values use the corresponding number of samples.
             The value is used to compute the number of True Negative Events.
 
-        tolerance_limit_sec_p: int, optional (default = 1)
+        tolerance_limit_sec_p : int, optional (default = 1)
             The tolerance limit that is used to determine the scores of the confusion matrix.
 
-        return_events_list_p: bool, optional (default = False)
+        return_events_list_p : boolean, optional (default = False)
             If set to True, the events that are TP, FP, and FN are returned in the results dictionary
         Returns
         -------
@@ -3160,6 +3403,17 @@ class EventDet_Liu_Ripple(BaseEstimator, ClassifierMixin):
         return results
 
 class Electrical_Metrics:
+    """
+    Class that contains several functions to compute (approximately) diverse Electrical metrics:
+
+    active_power
+    apparent_power
+    reative_power
+    power_factor
+    voltage_current_rms
+    single_rms
+
+    """
     def __init__(self):
         pass
 
@@ -3172,13 +3426,23 @@ class Electrical_Metrics:
         instantaneous power measurement over a given number of samples and divide by
         that number of samples.
 
-        Args:
-            instant_voltage: numpy array
-            instant_current: numpy array
 
-        Returns:
-            active power: numpy array
+        Parameters
+        ----------
+        instant_voltage : ndarray
+            Instantaneous Voltage, flat array
+        instant_current : ndarray
+            Instantaneous Current, flat array
+        period_length : int
+            Number of samples the features are computed over
+
+        Returns
+        -------
+        active_power : ndarray
+            Active Power array
+
         """
+
         instant_current = np.array(instant_current).flatten()
         instant_voltage = np.array(instant_voltage).flatten()
 
@@ -3201,14 +3465,23 @@ class Electrical_Metrics:
 
     def apparent_power(self, instant_voltage,instant_current,period_length):
         """
+        Compute apparent power:
         S = Vrms * Irms
-        Args:
-            instant_voltage: numpy array
-            instant_current: numpy array
-            period_length: numpy array
 
-        Returns:
-            apparent power: numpy array
+        Parameters
+        ----------
+        instant_voltage : ndarray
+            Instantaneous Voltage, flat array
+        instant_current : ndarray
+            Instantaneous Current, flat array
+        period_length : int
+            Number of samples the features are computed over
+
+        Returns
+        -------
+        apparent_power : ndarray
+            Apparent Power array
+
         """
         if len(instant_current) == len(instant_voltage):
 
@@ -3223,16 +3496,23 @@ class Electrical_Metrics:
 
     def reactive_power(self,apparent_power,active_power):
         """
-
+        Compute reactive power:
         Q = sqrt(S^2 - P^2)
-        Args:
-            apparent_power: numpy array
-            active_power: numpy array
 
-        Returns:
-            reactive power: numpy array
+        Parameters
+        ----------
+        apparent_power : ndarray
+            Apparent power, flat array
+        active_power : ndarray
+            Active power, flat array
+
+        Returns
+        -------
+        reactive_power : ndarray
+            Reactive power, flat array
 
         """
+
         if len(apparent_power) == len(active_power):
             reactive_power = np.sqrt((apparent_power * apparent_power) - (active_power * active_power))
             return reactive_power
@@ -3241,13 +3521,21 @@ class Electrical_Metrics:
 
     def compute_power_factor(self,apparent_power,active_power):
         """
+        Compute power factor:
         PF = P / S
-        Args:
-            apparent_power: numpy array
-            active_power: numpy array
 
-        Returns:
-            power factor: single integer
+        Parameters
+        ----------
+        apparent_power : ndarray
+            Apparent power, flat array
+        active_power : ndarray
+            Active power, flat array
+
+        Returns
+        -------
+        power_factor : float
+            Power factor
+
         """
 
         power_factor = active_power / apparent_power
@@ -3255,15 +3543,24 @@ class Electrical_Metrics:
 
     def compute_voltage_current_rms(self, voltage, current, period_length):
         """
+        Compute Root-Mean-Square (RMS) values for the provided voltage and current.
 
-        Args:
-            voltage: numpy array
-            current: numpy array
-            period_length: integer
+        Parameters
+        ----------
+        voltage : ndarray
+            Instantaneous Voltage, flat array
+        current : ndarray
+            Instantaneous Current, flat array
+        period_length : int
+            Number of samples the features are computed over
 
-        Returns:
-            voltage_rms: numpy array
-            current_rms: numpy array
+        Returns
+        -------
+        voltage_rms : ndarray
+            Voltage RMS values
+        current_rms : ndarray
+            Current RMS values
+
         """
         period_length = int(period_length)
         voltage_rms = self.compute_single_rms(voltage, period_length)
@@ -3272,13 +3569,21 @@ class Electrical_Metrics:
 
     def compute_single_rms(self,signal,period_length):
         """
+        Compute Root-Mean-Square (RMS) values for the provided signal.
 
-        Args:
-            signal: numpy array
-            period_length: in samples: can be the net frequency or a multiple of it
+        Parameters
+        ----------
+        signal : ndarray
+            Instantaneous Voltage OR Current flat array
 
-        Returns:
-            rms_values
+        period_length : int
+            Number of samples the features are computed over
+
+        Returns
+        -------
+        signal_rms : ndarray
+            RMS values of signal
+
         """
         rms_values = []
         period_length = int(period_length)
