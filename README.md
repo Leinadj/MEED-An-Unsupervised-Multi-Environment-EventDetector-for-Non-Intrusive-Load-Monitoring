@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/212113635.svg)](https://zenodo.org/badge/latestdoi/212113635)
+
 # Repository for the paper "MEED: An Unsupervised Multi-Environment Event Detector for Non-Intrusive Load Monitoring"
 ### by Daniel Jorde and Hans-Arno Jacobsen
 
@@ -11,7 +13,7 @@ The hyperparameter settings used to produce the results in the paper are based o
 
 The MEED event dector class contains the autoencoder model definition in its fit() function, but the training has do be done externally as it is to computationally intensive and dependent on the dataset to be done within the fit() function.
 
-Trained models can be found in the *MEED_Models* folder. They are zip compressed and stored as keras ".h5" models.
+Trained models can be found in the *MEED_Models* folder. They are stored as keras ".h5" models.
 
 As the models are trained via cross-validation each subfolder contains multiple instances of each model, each having a unique id that corresponds to the fold of the cross-validation that was used to train them.
 
