@@ -1,4 +1,4 @@
-[![DOI](https://zenodo.org/badge/212113635.svg)](https://zenodo.org/badge/latestdoi/212113635)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3490218.svg)](https://doi.org/10.5281/zenodo.3490218)
 
 # Repository for the paper "MEED: An Unsupervised Multi-Environment Event Detector for Non-Intrusive Load Monitoring"
 ### by Daniel Jorde and Hans-Arno Jacobsen
