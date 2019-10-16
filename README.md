@@ -11,7 +11,7 @@ All code is released under the MIT licence.
 The algorithms are implemented following the sklearn API.
 The hyperparameter settings used to produce the results in the paper are based on a grid search and are included as default values for the respective parameters in the algorithm implementations.
 
-The MEED event dector class contains the autoencoder model definition in its fit() function, but the training has do be done externally as it is to computationally intensive and dependent on the dataset to be done within the fit() function.
+The MEED event detector class contains the autoencoder model definition in its fit() function, but the training has do be done externally as it is to computationally intensive and dependent on the dataset to be done within the fit() function.
 
 Trained models can be found in the *MEED_Models* folder. They are stored as keras ".h5" models.
 
