@@ -164,7 +164,6 @@ ptyprocess==0.6.0
 pwlf==0.2.7
 py==1.5.2
 py-cpuinfo==4.0.0
-PyAstronomy==0.12.0
 PyAudio==0.2.11
 pycodestyle==2.3.1
 pycosat==0.6.3
@@ -182,7 +181,6 @@ pyOpenSSL==19.0.0
 pyparsing==2.3.1
 pyrsistent==0.14.11
 PySocks==1.6.8
-PySoundFile==0.9.0.post1
 pytest==3.3.2
 python-dateutil==2.8.0
 pytz==2018.9
@@ -199,8 +197,6 @@ rope==0.10.7
 rpy2==2.9.1
 rq==0.12.0
 ruamel-yaml==0.15.35
-sacred==0.7.4
-sacredboard==0.4.0
 scikit-image==0.15.0
 scikit-learn==0.20.1
 scipy==1.1.0
