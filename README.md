@@ -1,8 +1,10 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3490218.svg)](https://doi.org/10.5281/zenodo.3490218)
 
-# Repository for the paper "MEED: An Unsupervised Multi-Environment Event Detector for Non-Intrusive Load Monitoring"
+# Repository for the paper "Event Detection for Energy Consumption Monitoring"
+## accessible via doi: 10.1109/TSUSC.2020.3012066 or link: https://ieeexplore.ieee.org/document/9149809
 ### by Daniel Jorde and Hans-Arno Jacobsen
 
+#
 ## Content
 The repository contains the implementations of the four algorithms used for the benchmark of the MEED event detector and the MEED event detector itself.
 
