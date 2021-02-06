@@ -31,7 +31,10 @@ This ensures other researchers can compare their algorithms with ours.
 The score function uses a tolerance limit, like discussed in the paper and introduced by multiple other authors in the field,
 to determine true positive events.
 
+
+Python Version 3.6 is used.
 The *requirements.txt* file contains all python packages necessary.
+
 
 
 ### For questions please contact: daniel.jorde@tum.de
